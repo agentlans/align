@@ -1,3 +1,18 @@
+;;  This file is part of align: pairwise global DNA alignment
+;;  Copyright (C) 2020  Alan Tseng
+
+;;  This program is free software: you can redistribute it and/or modify
+;;  it under the terms of the GNU General Public License as published by
+;;  the Free Software Foundation, either version 3 of the License, or
+;;  (at your option) any later version.
+
+;;  This program is distributed in the hope that it will be useful,
+;;  but WITHOUT ANY WARRANTY; without even the implied warranty of
+;;  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+;;  GNU General Public License for more details.
+
+;;  You should have received a copy of the GNU General Public License
+;;  along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 (defun argmax (lst)
   "Returns the index of the largest element in lst.
@@ -11,10 +26,11 @@ is returned."
 (defun repeat-string (str times)
   "Repeats string a specified number of times and concatenates them.
 Returns the result."
-  (if (= times 0) ""
-      (reduce (lambda (x y)
+  (cond ((not times) "")
+        ((= times 0) "")
+        (t (reduce (lambda (x y)
 		(concatenate 'string x y))
-	      (loop for i from 1 to times collect str))))
+	      (loop for i from 1 to times collect str)))))
 ;; (repeat-string "1-" 5)
 
 (defun concatenate-pairs (pair1 pair2)
@@ -24,7 +40,7 @@ Returns the result."
 
 ;; last-row (str1 str2 s e d)
 
-(defun hirschberg (a b scoring-func gap-open gap-extension)
+(defun global-align (a b scoring-func gap-open gap-extension)
   "Returns the alignment of strings a and b that maximizes
 the alignment score using Hirschberg's variant
 of Needleman-Wunsch algorithm.
@@ -37,10 +53,12 @@ This is algorithm C in Hirschberg's paper."
 	   (cons a (repeat-string "-" m)))
 	  ((= m 1) ;; length(a) = 1 and b isn't empty
 	   (let ((pos (position (character a) b)))
+             (if (not pos)
+                 (concatenate-pairs (cons a "-") (cons (repeat-string "-" n) b))
 	     (cons (concatenate 'string
 				(repeat-string "-" pos)
 				a (repeat-string "-" (- n pos 1)))
-		   b)))
+		   b))))
 	  ;; Split problem
 	  (t (let* ((i (floor (/ m 2)))
 		    ;; Find the scores for a[0:i] and reverse(a[i:m])
@@ -57,11 +75,11 @@ This is algorithm C in Hirschberg's paper."
 				    (+ (svref l1 j)
 				       (svref l2 (- n j))))))
 		    ;; Solve smaller subproblems
-		    (c1 (hirschberg
+		    (c1 (global-align
 			 (subseq a 0 i)
 			 (subseq b 0 k)
 			 scoring-func gap-open gap-extension))
-		    (c2 (hirschberg
+		    (c2 (global-align
 			 (subseq a i m)
 			 (subseq b k n)
 			 scoring-func gap-open gap-extension)))

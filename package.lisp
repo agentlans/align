@@ -1,4 +1,5 @@
 ;;;; package.lisp
 
 (defpackage #:align
-  (:use #:cl))
+  (:use #:cl)
+  (:export global-align *ednafull-scorer* random-dna))

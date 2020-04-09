@@ -1,3 +1,18 @@
+;;  This file is part of align: pairwise global DNA alignment
+;;  Copyright (C) 2020  Alan Tseng
+
+;;  This program is free software: you can redistribute it and/or modify
+;;  it under the terms of the GNU General Public License as published by
+;;  the Free Software Foundation, either version 3 of the License, or
+;;  (at your option) any later version.
+
+;;  This program is distributed in the hope that it will be useful,
+;;  but WITHOUT ANY WARRANTY; without even the implied warranty of
+;;  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+;;  GNU General Public License for more details.
+
+;;  You should have received a copy of the GNU General Public License
+;;  along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 (defun scorer (mat letters)
   "Returns a function that scores nucleotides or amino acids.
@@ -68,6 +83,8 @@ str1 and str2.
 s is function that returns substitution score of two letters.
 e is gap open penalty.
 d is gap extension penalty."
+  (declare (string str1 str2) (function s) (integer e d))
+  (declare (optimize (speed 3) (safety 0)))
   (let* ((m (length str1))
 	 (n (length str2))
 	 ;; a, b, c vectors
@@ -96,8 +113,8 @@ d is gap extension penalty."
 				     (svref avp (- j 1))
 				     (svref bvp (- j 1))
 				     (svref cvp (- j 1))))
-			   (funcall s (char str1 (- i 1))
-				    (char str2 (- j 1)))))
+			   (funcall s (schar str1 (- i 1))
+				    (schar str2 (- j 1)))))
 		  (setf (svref bv j)
 			(funcall #'max2
 				 (list
@@ -111,9 +128,10 @@ d is gap extension penalty."
 				  (funcall #'-- (svref bv (- j 1)) e)
 				  (funcall #'-- (svref cv (- j 1)) d))))))))
     ;; Return results from the last iteration
-    (loop for i from 0 to n collect
-	 (funcall #'max2
-		  (list (svref av i)
-			(svref bv i)
-			(svref cv i))))))
+    (as-vector
+     (loop for i from 0 to n collect
+	  (funcall #'max2
+		   (list (svref av i)
+			 (svref bv i)
+			 (svref cv i)))))))
 
